@@ -1,4 +1,4 @@
-package com.fabianofranca.kotlinlab.di
+package com.fabianofranca.kotlinlab.tools
 
 import kotlin.reflect.KClass
 
