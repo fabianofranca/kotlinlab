@@ -37,15 +37,21 @@ class MainActivity : AppCompatActivity() {
 
         val api = Api()
 
-        doAsync {
+        asyncTask {
+
             api.login("Fabiano")
-        } success { r ->
-            Log.d("TEST", "$r Success request!")
-        } error {
-            Log.d("TEST", "Request error!")
+        } success {
+
+            Log.d("TEST", "$it Success request!")
         }
 
-        Log.d("TEST", "End")
+        retrofit {
+            getApi().getPost(1)
+        } success {
+            val post = it as? Post
+
+            post?.let { Log.d("TEST", "Title: ${it.title}") }
+        }
     }
 }
 

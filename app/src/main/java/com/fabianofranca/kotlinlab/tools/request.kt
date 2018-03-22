@@ -1,36 +1,44 @@
 package com.fabianofranca.kotlinlab.tools
 
 import android.os.AsyncTask
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import kotlin.properties.Delegates
+import kotlin.reflect.KProperty
 
-abstract class Requester<R>(private val request: () -> R) {
+abstract class Requester<out R>(protected val request: () -> R) {
 
     private val defaultSuccess : (Any?) -> Unit = {}
-    private val defaultError : () -> Unit = {}
-    private var result : Any? = null
+    private val defaultError : (Any?) -> Unit = {}
+    private var resultValue : Any? = null
 
-    var successAction : (Any?) -> Unit by Delegates.observable(defaultSuccess) {
-        _, _, new -> new?.let { result?.let { new(result) } }
+    private fun observable(property: KProperty<*>, old: (Any?) -> Unit, new: (Any?) -> Unit) {
+        resultValue?.let { new(resultValue) }
     }
 
-    var errorAction : () -> Unit by Delegates.observable(defaultError) {
-        _, _, new ->  new.let { result?.let { new() } }
-    }
+    var successAction : (Any?) -> Unit by Delegates.observable(defaultSuccess, ::observable)
+
+    var errorAction : (Any?) -> Unit by Delegates.observable(defaultSuccess, ::observable)
 
     fun run() {
         execute()
     }
 
-    abstract fun execute()
-
-    protected fun background() : R {
-        return request()
+    fun <T> result() : T? {
+        return resultValue as? T
     }
 
-    protected fun post(r: R) {
-        result = r
-        successAction.let { successAction(result) }
-        errorAction.let { errorAction() }
+    abstract fun execute()
+
+    protected fun post(success: Boolean, r: Any?) {
+        resultValue = r
+
+        if (success) {
+            successAction.let { successAction(resultValue) }
+        } else {
+            errorAction.let { errorAction(resultValue) }
+        }
     }
 }
 
@@ -39,12 +47,12 @@ infix fun Requester<*>.success(callback: (Any?) -> Unit): Requester<*> {
     return this
 }
 
-infix fun Requester<*>.error(callback: () -> Unit): Requester<*> {
+infix fun Requester<*>.fail(callback: (Any?) -> Unit): Requester<*> {
     errorAction = callback
     return this
 }
 
-class AsyncTaskRequester<R>(private val request: () -> R) : Requester<R>(request) {
+class AsyncTaskRequester<R>(request: () -> R) : Requester<R>(request) {
     override fun execute() {
         Task().execute()
     }
@@ -52,17 +60,46 @@ class AsyncTaskRequester<R>(private val request: () -> R) : Requester<R>(request
     inner class Task : AsyncTask<Void, Void, R>() {
 
         override fun doInBackground(vararg params: Void?): R {
-            return background()
+            return request()
         }
 
         override fun onPostExecute(r: R) {
-            post(r)
+            post(true, r)
         }
     }
 }
 
-fun <R> doAsync(action : () -> R): AsyncTaskRequester<R> {
+fun <R> asyncTask(action : () -> R): AsyncTaskRequester<R> {
     val requester = AsyncTaskRequester(action)
+    requester.run()
+    return requester
+}
+
+class RetrofitRequester<R>(request: () -> Call<R>) : Requester<Call<R>>(request) {
+
+    override fun execute() {
+        request().enqueue(RetrofitCallback())
+    }
+
+    inner class RetrofitCallback<R> : Callback<R> {
+        override fun onFailure(call: Call<R>?, t: Throwable?) {
+            post(false, t)
+        }
+
+        override fun onResponse(call: Call<R>?, response: Response<R>?) {
+            var body : R? = null
+
+            response?.let {
+                body = it.body()
+            }
+
+            post(true, body)
+        }
+    }
+}
+
+fun <R> retrofit(action : () -> Call<R>): RetrofitRequester<R> {
+    val requester = RetrofitRequester(action)
     requester.run()
     return requester
 }
