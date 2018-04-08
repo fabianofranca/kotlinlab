@@ -1,7 +1,7 @@
-package com.fabianofranca.kotlinlab.presentation.main
+package com.fabianofranca.kotlinlab.presentation.posts
 
-import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
+import android.os.Bundle
 import android.support.v7.widget.DividerItemDecoration
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
@@ -10,25 +10,26 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
+import com.fabianofranca.injektor.SESSION
+import com.fabianofranca.injektor.injection
+import com.fabianofranca.injektor.provide
+import com.fabianofranca.kotlinlab.Posts
 import com.fabianofranca.kotlinlab.R
-import com.fabianofranca.kotlinlab.infrastructure.inject
-import com.fabianofranca.kotlinlab.infrastructure.provide
-import com.fabianofranca.kotlinlab.presentation.main.contracts.MainPresenter
-import com.fabianofranca.kotlinlab.presentation.main.contracts.MainView
+import com.fabianofranca.kotlinlab.presentation.posts.contracts.PostsPresenter
+import com.fabianofranca.kotlinlab.presentation.posts.contracts.PostsView
 
-open class MainActivity : AppCompatActivity(), MainView {
+class PostsActivity : AppCompatActivity(), PostsView {
 
-    private val presenter: MainPresenter by inject()
+    private val presenter: PostsPresenter by injection(Posts)
 
     private lateinit var adapter: PostTitlesAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
-        provide(MainView::class) { this }
+        provide(SESSION, Posts) { this@PostsActivity as PostsView }
 
         super.onCreate(savedInstanceState)
-
-        setContentView(R.layout.activity_main)
+        setContentView(R.layout.activity_posts)
 
         setupPosts()
 
@@ -41,7 +42,7 @@ open class MainActivity : AppCompatActivity(), MainView {
         recyclerView.setHasFixedSize(true)
 
         val linearLayoutManager = LinearLayoutManager(
-            this@MainActivity,
+            this@PostsActivity,
             LinearLayoutManager.VERTICAL, false
         )
 
@@ -49,7 +50,7 @@ open class MainActivity : AppCompatActivity(), MainView {
 
         recyclerView.addItemDecoration(
             DividerItemDecoration(
-                this@MainActivity,
+                this@PostsActivity,
                 DividerItemDecoration.VERTICAL
             )
         )
@@ -65,6 +66,11 @@ open class MainActivity : AppCompatActivity(), MainView {
 
     override fun showError(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onBackPressed() {
+        super.onBackPressed()
+        finish()
     }
 }
 

@@ -1,19 +1,17 @@
-package com.fabianofranca.kotlinlab.presentation.main
+package com.fabianofranca.kotlinlab.presentation.posts
 
 import com.fabianofranca.kotlinlab.business.PostsBusiness
 import com.fabianofranca.kotlinlab.business.business
 import com.fabianofranca.kotlinlab.business.failure
 import com.fabianofranca.kotlinlab.business.success
-import com.fabianofranca.kotlinlab.infrastructure.inject
-import com.fabianofranca.kotlinlab.presentation.main.contracts.MainPresenter
-import com.fabianofranca.kotlinlab.presentation.main.contracts.MainView
+import com.fabianofranca.kotlinlab.presentation.posts.contracts.PostsPresenter
+import com.fabianofranca.kotlinlab.presentation.posts.contracts.PostsView
 
-class MainPresenterImpl : MainPresenter {
-
-    private val view: MainView by inject()
+class PostsPresenterImpl(private val view: PostsView, private val business: PostsBusiness) :
+    PostsPresenter {
 
     override fun loadPosts() {
-        business(PostsBusiness()) {
+        business(business) {
             postTitles().success {
                 view.updatePostList(it)
             } failure {
