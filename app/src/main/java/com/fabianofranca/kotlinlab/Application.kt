@@ -2,7 +2,7 @@ package com.fabianofranca.kotlinlab
 
 import android.app.Application
 import com.fabianofranca.injektor.*
-import com.fabianofranca.kotlinlab.business.PostsBusiness
+import com.fabianofranca.kotlinlab.business.PostsBusinessImpl
 import com.fabianofranca.kotlinlab.presentation.posts.PostsPresenterImpl
 import com.fabianofranca.kotlinlab.presentation.posts.contracts.PostsPresenter
 import com.fabianofranca.kotlinlab.provider.PostsProvider
@@ -19,7 +19,7 @@ class Application : Application() {
         super.onCreate()
 
         provide(SESSION, scope = Posts) { PostsPresenterImpl(inject(), inject()) as PostsPresenter }
-        provide(SESSION, scope = Posts) { PostsBusiness(inject()) }
+        provide(SESSION, scope = Posts) { PostsBusinessImpl(inject()) }
         provide(SESSION, scope = Posts) { PostsProvider(inject()) }
 
         provide(SINGLETON) { HttpUrl.parse("http://jsonplaceholder.typicode.com/") }

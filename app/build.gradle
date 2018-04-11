@@ -1,8 +1,36 @@
 apply plugin: 'com.android.application'
-
 apply plugin: 'kotlin-android'
-
 apply plugin: 'kotlin-android-extensions'
+apply plugin: 'jacoco'
+
+jacoco {
+    toolVersion = "$jacoco_version"
+}
+
+tasks.withType(Test) {
+    jacoco.includeNoLocationClasses = true
+}
+
+task jacocoTestReport(type: JacocoReport, dependsOn: ['testDebugUnitTest']) {
+
+    reports {
+        xml.enabled = true
+        html.enabled = true
+    }
+
+    def fileFilter = [
+            '**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*', '**/*$[0-9].*'
+    ]
+
+    def debugTree = fileTree(dir: "$project.buildDir/tmp/kotlin-classes/debug", excludes: fileFilter)
+    def mainSrc = "$project.projectDir/src/main/java"
+
+    sourceDirectories = files([mainSrc])
+    classDirectories = files([debugTree])
+    executionData = fileTree(dir: project.buildDir, includes: [
+            'jacoco/testDebugUnitTest.exec', 'outputs/code-coverage/connected/*coverage.ec'
+    ])
+}
 
 android {
     compileSdkVersion 27
@@ -12,15 +40,15 @@ android {
         targetSdkVersion 27
         versionCode 1
         versionName "1.0"
-        testInstrumentationRunner "com.github.tmurakami.dexopener.DexOpenerAndroidJUnitRunner"
+        testInstrumentationRunner "com.fabianofranca.kotlinlab.TestRunner"
     }
     buildTypes {
+        debug {
+            testCoverageEnabled = true
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-        }
-        debug {
-            testCoverageEnabled = true
         }
     }
 }

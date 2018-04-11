@@ -1,15 +1,15 @@
 package com.fabianofranca.kotlinlab.business
 
+import com.fabianofranca.kotlinlab.infrastructure.Coroutine
 import kotlinx.coroutines.experimental.Deferred
 import kotlinx.coroutines.experimental.async
 import kotlin.coroutines.experimental.CoroutineContext
 
 fun <B> business(
     businessInstance: B,
-    context: CoroutineContext = kotlinx.coroutines.experimental.android.UI,
+    context: CoroutineContext = Coroutine.UI,
     block: suspend B.() -> Unit
 ) {
-
     async(context) { block(businessInstance) }
 }
 

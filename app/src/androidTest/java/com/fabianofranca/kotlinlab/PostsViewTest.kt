@@ -13,9 +13,11 @@ import com.fabianofranca.kotlinlab.presentation.posts.PostTitleViewHolder
 import com.fabianofranca.kotlinlab.presentation.posts.PostsActivity
 import com.fabianofranca.kotlinlab.presentation.posts.contracts.PostsPresenter
 import org.hamcrest.Matchers.allOf
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.Assert.assertTrue
 import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.Mockito.verify
@@ -32,9 +34,6 @@ class PostsViewTest {
 
     @Before
     fun before() {
-        Default.clear()
-        Posts.clear()
-
         MockitoAnnotations.initMocks(this)
 
         provide(SESSION, Posts) { presenter }
@@ -42,13 +41,19 @@ class PostsViewTest {
         activityRule.launchActivity(null)
     }
 
+    @After
+    fun tearDown() {
+        Default.clear()
+        Posts.clear()
+    }
+
     @Test
-    fun loadPostOnCreate_isCorrect() {
+    fun onCreate_shouldLoadPosts() {
         verify(presenter).loadPosts()
     }
 
     @Test
-    fun updatePostList_isCorrect() {
+    fun updatePostList_shouldDisplayAPostsList() {
 
         activityRule.runOnUiThread {
             activityRule.activity.updatePostList(listOf("Teste 1", "Teste 2", "Teste 3"))
@@ -61,5 +66,23 @@ class PostsViewTest {
         )
 
         onView(withId(R.id.recycler_view_posts)).check(matches(allOf(hasDescendant(withText("Teste 1")))))
+    }
+
+    @Test
+    fun showError_shouldDisplayAMessage() {
+        activityRule.runOnUiThread {
+            activityRule.activity.showError("Mensagem de Teste")
+        }
+
+        onView(withText("Mensagem de Teste"))
+    }
+
+    @Test
+    fun onBackPressed_shouldFinishActivity() {
+        activityRule.runOnUiThread {
+            activityRule.activity.onBackPressed()
+        }
+
+        assertTrue(activityRule.activity.isFinishing)
     }
 }
