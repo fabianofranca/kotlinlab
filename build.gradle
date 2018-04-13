@@ -1,6 +1,11 @@
+import java.awt.Desktop
+
+apply plugin: 'jacoco'
+
 buildscript {
     ext.kotlin_version = '1.2.31'
     ext.jacoco_version = '0.8.1'
+    ext.jacoco_report = "$rootProject.buildDir/reports/jacoco"
 
     repositories {
         google()
@@ -24,4 +29,55 @@ allprojects {
 
 task clean(type: Delete) {
     delete rootProject.buildDir
+}
+
+jacoco {
+    toolVersion = "$jacoco_version"
+    reportsDir = file(jacoco_report)
+}
+
+task jacocoTestReport(type: JacocoReport) {
+
+    reports {
+        xml.enabled = true
+        html.enabled = true
+    }
+
+    def fileFilter = [
+            '**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*', '**/*$[0-9].*'
+    ]
+
+    def children = rootProject.getChildProjects()
+
+    def source = []
+    def klass = []
+    def data = []
+
+    for (child in children) {
+        def espresso = child.value.tasks.findByPath(":$child.key:createDebugCoverageReport")
+
+        if (espresso != null) {
+            dependsOn espresso.path
+        }
+
+        def unit = child.value.tasks.findByPath(":$child.key:testDebugUnitTest")
+
+        if (unit != null) {
+            dependsOn unit.path
+
+            if (espresso != null) {
+                unit.shouldRunAfter espresso
+            }
+        }
+    }
+
+    for (child in children) {
+        source << "$child.value.projectDir/src/main/java"
+        klass << fileTree(dir: "$child.value.buildDir/tmp/kotlin-classes/debug", excludes: fileFilter)
+        data << fileTree(dir: child.value.buildDir, includes: ['jacoco/testDebugUnitTest.exec', 'outputs/code-coverage/connected/*coverage.ec'])
+    }
+
+    sourceDirectories = files(source)
+    classDirectories = files(klass)
+    executionData =  files(data)
 }
