@@ -1,5 +1,3 @@
-import java.awt.Desktop
-
 apply plugin: 'jacoco'
 
 buildscript {
