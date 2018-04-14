@@ -1,0 +1,104 @@
+apply plugin: 'jacoco'
+
+buildscript {
+    ext.jacoco_version = '0.8.1'
+    ext.jacoco_report = "$rootProject.buildDir/jacoco"
+
+    repositories {
+        google()
+        jcenter()
+    }
+    dependencies {
+        classpath "org.jacoco:org.jacoco.core:$jacoco_version"
+    }
+}
+
+jacoco {
+    toolVersion = "$jacoco_version"
+}
+
+void createJacocoTestReportTask(Map<String, Project> projects, String taskName, String baseReportPath, Boolean onlyUnitTest = false, String groupName = 'Jacoco') {
+
+    def name = "$taskName${onlyUnitTest ? '_unit_test' : ''}"
+
+    task "$name"(type: JacocoReport) {
+
+        group = groupName
+
+        def reportPath = "$baseReportPath/$name"
+
+        reports {
+            xml.enabled false
+            csv.enabled false
+            html.setDestination(file(reportPath))
+        }
+
+        // DEPENDS_ON
+
+        projects.each { n, p ->
+            def espresso = null
+
+            if (!onlyUnitTest) {
+                espresso = p.tasks.findByPath(":$n:createDebugCoverageReport")
+
+                if (espresso != null) {
+                    dependsOn espresso.path
+                }
+            }
+
+            def unit = p.tasks.findByPath(":$n:testDebugUnitTest")
+
+            if (unit != null) {
+                dependsOn unit.path
+
+                if (espresso != null) {
+                    unit.shouldRunAfter espresso
+                }
+            }
+        }
+
+        // JACOCO CONFIGURATION
+
+        def source = []
+        def klass = []
+        def data = []
+        def includes = ['jacoco/testDebugUnitTest.exec']
+
+        if (!onlyUnitTest) {
+            includes << 'outputs/code-coverage/connected/*coverage.ec'
+        }
+
+        def fileFilter = [
+                '**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*', '**/*$[0-9].*'
+        ]
+
+        projects.each { n, p ->
+            source << "$p.projectDir/src/main/java"
+            klass << fileTree(dir: "$p.buildDir/tmp/kotlin-classes/debug", excludes: fileFilter)
+            data << fileTree(dir: p.buildDir, includes: includes)
+        }
+
+        sourceDirectories = files(source)
+        classDirectories = files(klass)
+        executionData = files(data)
+
+        doLast {
+            logger.quiet('==================================')
+            logger.quiet('')
+            logger.quiet("JaCoCo Report: $reportPath/index.html")
+            logger.quiet('')
+            logger.quiet('==================================')
+        }
+    }
+}
+
+createJacocoTestReportTask(rootProject.getChildProjects(), rootProject.name, jacoco_report)
+createJacocoTestReportTask(rootProject.getChildProjects(), rootProject.name, jacoco_report, true)
+
+rootProject.getChildProjects().each { n, p ->
+    def map = [:]
+    map.put(n, p)
+
+    createJacocoTestReportTask(map, n, jacoco_report)
+    createJacocoTestReportTask(map, n, jacoco_report, true)
+}
