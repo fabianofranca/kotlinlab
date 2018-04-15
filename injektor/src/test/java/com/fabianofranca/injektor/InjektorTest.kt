@@ -3,102 +3,101 @@ package com.fabianofranca.injektor
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
-import java.util.*
 
 class InjektorTest {
 
     @Before
     fun setup() {
-        Default.clear()
-        Alpha.clear()
-        Beta.clear()
+        Default.providers.clear()
+        Alpha.providers.clear()
     }
 
     @Test
-    fun provideAndInjection_isCorrect() {
+    fun canInject_shouldReturnFalse() {
+        assertFalse(canInject<Value>())
+    }
 
-        provide { Value() }
-        provide { DependentValue(inject()) }
+    @Test
+    fun provide_shouldAddProviderInDefaultScope() {
+        provide(NonSingletonProvider.Factory()) { Value() }
 
+        assertTrue(canInject<Value>())
+    }
+
+    @Test
+    fun provide_shouldAddProviderInCustomScope() {
+        provide(NonSingletonProvider.Factory(), scope = Alpha) { Value() }
+
+        assertTrue(Alpha.canInject<Value>())
+        assertFalse(canInject<Value>())
+    }
+
+    @Test
+    fun provideNonSingleton_shouldAddProvider() {
+        provideNonSingleton { Value() }
+
+        assertTrue(canInject<Value>())
+    }
+
+    @Test
+    fun provideNonSingleton_shouldAddProviderInCustomScope() {
+        provideNonSingleton(Alpha) { Value() }
+
+        assertTrue(Alpha.canInject<Value>())
+        assertFalse(canInject<Value>())
+    }
+
+    @Test
+    fun provideSession_shouldAddProvider() {
+        provideSession { Value() }
+
+        assertTrue(canInject<Value>())
+    }
+
+    @Test
+    fun provideSession_shouldAddProviderInCustomScope() {
+        provideSession(Alpha) { Value() }
+
+        assertTrue(Alpha.canInject<Value>())
+        assertFalse(canInject<Value>())
+    }
+
+    @Test
+    fun provideSingleton_shouldAddProvider() {
+        provideSingleton { Value() }
+
+        assertTrue(canInject<Value>())
+    }
+
+    @Test
+    fun provideSingleton_shouldAddProviderInCustomScope() {
+        provideSingleton(Alpha) { Value() }
+
+        assertTrue(Alpha.canInject<Value>())
+        assertFalse(canInject<Value>())
+    }
+
+    @Test
+    fun provide_shouldInjectByConstructorInProviderLambda() {
+        provideNonSingleton { Value() }
+        provideNonSingleton { DependentValue(inject()) }
+
+        assertNotNull(Default.inject<DependentValue>().constructorValue)
+    }
+
+    @Test
+    fun injection_shouldInject() {
+        provideNonSingleton { Value() }
         val value: Value by injection()
-        val dependentValue: DependentValue by injection()
 
         assertNotNull(value)
-        assertNotNull(dependentValue)
-        assertNotNull(dependentValue!!.value1)
-        assertNotNull(dependentValue!!.value2)
     }
 
     @Test
-    fun provideNonSingleton_isCorrect() {
+    fun inject_shouldInject() {
+        provideNonSingleton { Value() }
+        val value: Value = Default.inject()
 
-        provide { Value() }
-
-        val value1: Value by injection()
-        val value2: Value by injection()
-
-        assertNotEquals(value1.value, value2.value)
+        assertNotNull(value)
     }
-
-    @Test
-    fun provideSession_isCorrect() {
-
-        provide(SESSION) { Value() }
-
-        val value1: Value by injection()
-        val value2: Value by injection()
-
-        assertEquals(value1.value, value2.value)
-    }
-
-    @Test
-    fun provideSingleton_isCorrect() {
-
-        provide(SINGLETON) { Value() }
-
-        val value1: Value by injection()
-        val value2: Value by injection()
-
-        assertEquals(value1.value, value2.value)
-    }
-
-    @Test
-    fun Scope_isCorrect() {
-
-        provide(SINGLETON) { Value() }
-        provide(SINGLETON, scope = Alpha) { DependentValue(inject()) }
-        provide(SINGLETON, scope = Beta) { DependentValue(inject()) }
-
-        val alphaValue1 : DependentValue by injection(Alpha)
-        val alphaValue2 : DependentValue by injection(Alpha)
-
-        val betaValue1 : DependentValue by injection(Beta)
-        val betaValue2 : DependentValue by injection(Beta)
-
-        assertEquals(alphaValue1.value, alphaValue2.value)
-        assertEquals(betaValue1.value, betaValue2.value)
-
-        assertNotEquals(alphaValue1.value, betaValue1.value)
-
-        assertEquals(alphaValue1.value1, betaValue1.value1)
-    }
-}
-
-object Alpha : Scope(Default)
-
-object Beta : Scope(Default)
-
-open class Value {
-    val value: Int
-
-    init {
-        val random = Random()
-
-        value = random.nextInt(999999999)
-    }
-}
-
-class DependentValue(val value1: Value?) : Value() {
-
-    val value2: Value? by injection()
 }
