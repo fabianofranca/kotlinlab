@@ -4,7 +4,7 @@ import android.app.Application
 import android.content.Context
 import com.github.tmurakami.dexopener.DexOpenerAndroidJUnitRunner
 
-class TestRunner: DexOpenerAndroidJUnitRunner() {
+class TestRunner : DexOpenerAndroidJUnitRunner() {
 
     override fun newApplication(
         cl: ClassLoader?,

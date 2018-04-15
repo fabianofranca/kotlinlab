@@ -1,7 +1,7 @@
 package com.fabianofranca.kotlinlab.presentation.posts
 
-import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.DividerItemDecoration
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
@@ -10,9 +10,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
-import com.fabianofranca.injektor.SESSION
 import com.fabianofranca.injektor.injection
-import com.fabianofranca.injektor.provide
+import com.fabianofranca.injektor.provideSession
 import com.fabianofranca.kotlinlab.Posts
 import com.fabianofranca.kotlinlab.R
 import com.fabianofranca.kotlinlab.presentation.posts.contracts.PostsPresenter
@@ -26,7 +25,7 @@ class PostsActivity : AppCompatActivity(), PostsView {
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
-        provide(SESSION, Posts) { this@PostsActivity as PostsView }
+        provideSession(Posts) { this@PostsActivity as PostsView }
 
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_posts)

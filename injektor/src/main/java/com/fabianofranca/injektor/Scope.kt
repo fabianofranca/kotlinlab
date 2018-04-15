@@ -13,8 +13,8 @@ abstract class Scope(val parent: Scope? = null) {
         noinline instanceFactory: InstanceFactory<T>
     ) = providers.add(T::class, providerFactory.getProvider(this, instanceFactory))
 
-    fun <T: Any> inject(kclass: KClass<T>): Any {
-        var scope =  this
+    fun <T : Any> inject(kclass: KClass<T>): Any {
+        var scope = this
         var found = false
 
         while (!found) {
