@@ -43,12 +43,12 @@ class PostPresenterTest {
 
     @Test
     fun loadPosts_shouldSendErrorMessageToView() {
-        `when`(business.postTitles()).thenReturn(async { throw RuntimeException("Teste") })
+        `when`(business.postTitles()).thenReturn(async { throw RuntimeException("Test") })
 
         val presenter = PostsPresenterImpl(view, business)
 
         presenter.loadPosts()
 
-        verify(view).showError("Teste")
+        verify(view).showError("Test")
     }
 }

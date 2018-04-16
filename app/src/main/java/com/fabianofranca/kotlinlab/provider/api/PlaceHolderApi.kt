@@ -11,13 +11,3 @@ interface PlaceHolderApi {
     @GET("posts")
     fun posts(): Request<List<Post>>
 }
-
-fun getApi(): PlaceHolderApi {
-
-    return Retrofit.Builder()
-        .baseUrl("http://jsonplaceholder.typicode.com/")
-        .addCallAdapterFactory(RequestAdapterFactory())
-        .addConverterFactory(GsonConverterFactory.create(Gson()))
-        .build()
-        .create(PlaceHolderApi::class.java)
-}
