@@ -15,6 +15,8 @@ buildscript {
 }
 
 allprojects {
+    apply plugin: 'jacoco'
+
     repositories {
         google()
         jcenter()
