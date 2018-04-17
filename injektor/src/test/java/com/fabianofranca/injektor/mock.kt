@@ -14,4 +14,9 @@ open class Value {
     }
 }
 
+class ValueAlpha : Value()
+class ValueBeta : Value()
+class ValueGama : Value()
+
 class DependentValue(val constructorValue: Value?) : Value()
+

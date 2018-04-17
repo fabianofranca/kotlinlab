@@ -3,6 +3,7 @@ package com.fabianofranca.injektor
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
+import kotlin.reflect.KClass
 
 class InjektorTest {
 
@@ -99,5 +100,57 @@ class InjektorTest {
         val value: Value = Default.inject()
 
         assertNotNull(value)
+    }
+
+    @Test
+    fun shouldInjectInstancesInList() {
+        val value1 = ValueAlpha()
+        val value2 = ValueBeta()
+        val value3 = ValueGama()
+
+        provideNonSingleton { value1 }
+        provideNonSingleton { value2 }
+        provideNonSingleton { value3 }
+
+        provideSingleton {
+            mutableListOf<Value>().apply {
+                add(inject<ValueAlpha>())
+                add(inject<ValueBeta>())
+                add(inject<ValueGama>())
+            }
+        }
+
+        val list: MutableList<Value> by injection()
+
+        assertTrue(list.size == 3)
+        assertTrue(list[0].value == value1.value)
+        assertTrue(list[1].value == value2.value)
+        assertTrue(list[2].value == value3.value)
+    }
+
+    @Test
+    fun shouldInjectInstancesInHashMap() {
+        val value1 = ValueAlpha()
+        val value2 = ValueBeta()
+        val value3 = ValueGama()
+
+        provideNonSingleton { value1 }
+        provideNonSingleton { value2 }
+        provideNonSingleton { value3 }
+
+        provideSingleton {
+            hashMapOf<KClass<*>, Value>().apply {
+                this[ValueAlpha::class] = inject<ValueAlpha>()
+                this[ValueBeta::class] = inject<ValueBeta>()
+                this[ValueGama::class] = inject<ValueGama>()
+            }
+        }
+
+        val map: HashMap<KClass<*>, Value> by injection()
+
+        assertTrue(map.size == 3)
+        assertTrue(map[ValueAlpha::class]?.value == value1.value)
+        assertTrue(map[ValueBeta::class]?.value == value2.value)
+        assertTrue(map[ValueGama::class]?.value == value3.value)
     }
 }
