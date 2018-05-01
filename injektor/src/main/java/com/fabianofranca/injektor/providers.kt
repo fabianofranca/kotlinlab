@@ -5,7 +5,10 @@ import java.lang.ref.WeakReference
 import kotlin.reflect.KClass
 
 class ProviderNotFoundException(kclass: KClass<*>) :
-    RuntimeException("Provider not found to key $kclass")
+    RuntimeException("Provider not found to class $kclass")
+
+class NamedProviderNotFoundException(name: String) :
+    RuntimeException("Provider not found to name '$name'")
 
 class DependencyNoLongerAvailableException : RuntimeException("Instance is no longer available")
 
@@ -98,18 +101,28 @@ class SingletonProvider<T : Any>(scope: Scope, factory: InstanceFactory<T>) :
 class ProviderMap {
 
     private val providers = HashMap<KClass<*>, Provider<*>>()
+    private val namedProviders = HashMap<String, Provider<*>>()
 
     fun hasProvider(kclass: KClass<*>) = providers.containsKey(kclass)
+    fun hasProvider(name: String) = namedProviders.containsKey(name)
 
     fun add(kclass: KClass<*>, provider: Provider<*>) {
         providers[kclass] = provider
     }
 
+    fun add(name: String, provider: Provider<*>) {
+        namedProviders[name] = provider
+    }
+
     fun get(kclass: KClass<*>): Provider<*> =
         providers[kclass]?.let { return it } ?: throw ProviderNotFoundException(kclass)
+
+    fun get(name: String): Provider<*> =
+        namedProviders[name]?.let { return it } ?: throw NamedProviderNotFoundException(name)
 
     @TestOnly
     fun clear() {
         providers.clear()
+        namedProviders.clear()
     }
 }
