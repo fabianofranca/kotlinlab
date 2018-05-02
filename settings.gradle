@@ -1,1 +1,1 @@
-include ':app', ':injektor'
+include ':app', ':injektor', ':glue'
