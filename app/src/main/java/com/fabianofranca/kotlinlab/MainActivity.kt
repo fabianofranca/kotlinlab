@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.text.Editable
 import android.text.TextWatcher
+import android.widget.TextView
 import com.fabianofranca.kotlinlab.presentation.posts.PostsActivity
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlin.properties.ReadWriteProperty
@@ -29,16 +30,17 @@ class MainActivity : AppCompatActivity() {
         edName.setText(user.name)
         edEmail.setText(user.email)
 
-        user.binding {
-            bind(user::name) { txtName.text = user.name }
-            bind(user::email) { txtEmail.text = user.email }
-        }
+        val nameAdapter = TextViewBindingAdapter(txtName, User::name, user) { name }
+        val emailAdapter = TextViewBindingAdapter(txtName, User::email, user) { email }
+
+        user.binding.add(nameAdapter)
+        user.binding.add(emailAdapter)
 
         btnBind.setOnClickListener {
-            user.dataBinding.refresh()
+            user.binding.bind()
         }
 
-        user.dataBinding.refresh()
+        user.binding.bind()
 
         edName.addTextChangedListener(object : TextWatcher {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
@@ -66,12 +68,16 @@ class MainActivity : AppCompatActivity() {
     }
 }
 
-data class User(override val dataBinding: DataBinding = DataBinding()) : BindableData {
-    var name: String by BindableProperty("")
+data class User(val id: Int = 0) : BindableData {
+
+    override val binding: DataBinding<User> = DataBinding(this)
+
+    var name: String by BindableProperty(binding, "")
     var email: String = ""
 }
 
-class BindableProperty<T>(initialValue: T) : ReadWriteProperty<Any?, T> {
+class BindableProperty<T>(private val dataBinding: BaseDataBinding, initialValue: T) :
+    ReadWriteProperty<Any?, T> {
     private var value = initialValue
 
     override fun getValue(thisRef: Any?, property: KProperty<*>): T {
@@ -82,37 +88,74 @@ class BindableProperty<T>(initialValue: T) : ReadWriteProperty<Any?, T> {
         this.value = value
 
         thisRef?.let {
-            val bindable = it as BindableData
-            bindable.dataBinding.notifyPropertyChanged(property)
+            dataBinding.notifyPropertyChanged(property)
         }
     }
 }
 
 interface BindableData {
-    val dataBinding: DataBinding
+    val binding: BaseDataBinding
 
-    fun binding(body: DataBinding.() -> Unit) {
-        body(dataBinding)
+    fun binding(body: BaseDataBinding.() -> Unit) {
+        body(binding)
     }
 }
 
-class DataBinding {
+interface BaseDataBinding {
+    fun notifyPropertyChanged(property: KProperty<*>)
+    fun bind()
+}
 
-    private val bindings = HashMap<Int, () -> Unit>()
+class DataBinding<T : BindableData>(val data: T) : BaseDataBinding {
 
-    fun bind(property: KProperty<*>, onChange: () -> Unit) {
-        bindings[property.hashCode()] = onChange
+    private val adapters = HashMap<Int, BindingAdapter>()
+
+    fun add(property: KProperty<*>, onChange: T.() -> Unit) {
+        adapters[property.hashCode()] = OneWayBindingAdapter(property, data, onChange)
     }
 
-    fun notifyPropertyChanged(property: KProperty<*>) {
-        val binding = bindings[property.hashCode()]
+    fun add(adapter: BindingAdapter) {
+        adapters[adapter.property.hashCode()] = adapter
+    }
 
-        binding?.let {
-            binding()
+    override fun notifyPropertyChanged(property: KProperty<*>) {
+        val binding = adapters[property.hashCode()]
+
+        binding?.notifyPropertyChanged(property)
+    }
+
+    override fun bind() {
+        for (adapter in adapters) adapter.value.bind()
+    }
+}
+
+abstract class BindingAdapter(val property: KProperty<*>) {
+    abstract fun notifyPropertyChanged(property: KProperty<*>)
+    abstract fun bind()
+}
+
+open class OneWayBindingAdapter<T : BindableData>(
+    property: KProperty<*>,
+    private val data: T,
+    private val onChange: T.() -> Unit
+) :
+    BindingAdapter(property) {
+
+    override fun notifyPropertyChanged(property: KProperty<*>) {
+        if (this.property.hashCode() == property.hashCode()) {
+            change()
         }
     }
 
-    fun refresh() {
-        for (bind in bindings) bind.value()
+    private fun change() {
+        onChange(data)
+    }
+
+    override fun bind() {
+        change()
     }
 }
+
+class TextViewBindingAdapter<T : BindableData>(
+    private val textView: TextView, property: KProperty<*>, data: T, onChange: T.() -> String
+) : OneWayBindingAdapter<T>(property, data, { textView.text = onChange(data) })
