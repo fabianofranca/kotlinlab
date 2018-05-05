@@ -3,7 +3,7 @@ package com.fabianofranca.glue
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
-class BindableProperty<T>(private val dataBinding: BaseDataBinding, initialValue: T) :
+class BindableProperty<T>(private val bindingManager: BaseBindingManager, initialValue: T) :
     ReadWriteProperty<Any?, T> {
     private var value = initialValue
 
@@ -15,7 +15,7 @@ class BindableProperty<T>(private val dataBinding: BaseDataBinding, initialValue
         this.value = value
 
         thisRef?.let {
-            dataBinding.notifyPropertyChanged(property)
+            bindingManager.notifyPropertyChanged(property)
         }
     }
 }
