@@ -3,11 +3,13 @@ package com.fabianofranca.kotlinlab
 import android.content.Intent
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
-import android.text.Editable
-import android.text.TextWatcher
-import com.fabianofranca.glue.*
+import com.fabianofranca.glue.BindingData
+import com.fabianofranca.glue.BindingManager
+import com.fabianofranca.glue.BindingProperty
+import com.fabianofranca.glue.binding
 import com.fabianofranca.kotlinlab.presentation.posts.PostsActivity
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlin.system.measureTimeMillis
 
 class MainActivity : AppCompatActivity() {
 
@@ -25,18 +27,30 @@ class MainActivity : AppCompatActivity() {
         user.name = "Fabiano"
         user.email = "email@fabianofranca.com"
 
-        txtName.binding(user, User::name) { name }
-        txtEmail.binding(user, User::email) { email }
+        var time = measureTimeMillis {
+            txtName.binding(user, User::name)
+            txtEmail.binding(user, User::email)
 
-        edName1.binding(user, User::name, { name }) { name = it }
-        edName2.binding(user, User::name, { name }) { name = it }
+            edName1.binding(user, User::name)
+            edName2.binding(user, User::name)
 
-        edEmail.binding(user, User::email, { email }) { email = it }
+            edEmail.binding(user, User::email)
+        }
 
-        user.bind()
+        println("tuning: setup $time")
+
+        time = measureTimeMillis {
+            user.notifyChanges()
+        }
+
+        println("tuning: init notify $time")
 
         btnBind.setOnClickListener {
-            user.bindingManager.bind()
+            val time = measureTimeMillis {
+                user.notifyChanges()
+            }
+
+            println("tuning: button notify $time")
         }
     }
 }
@@ -45,6 +59,6 @@ data class User(val id: Int = 0) : BindingData {
 
     override val bindingManager: BindingManager<User> = BindingManager(this)
 
-    var name: String by BindableProperty(bindingManager, "")
+    var name: String by BindingProperty(bindingManager, "")
     var email: String = ""
 }

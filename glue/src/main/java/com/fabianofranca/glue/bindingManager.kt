@@ -1,35 +1,35 @@
 package com.fabianofranca.glue
 
-import kotlin.reflect.KProperty
+import kotlin.reflect.KProperty1
 
 interface BaseBindingManager {
-    fun notifyPropertyChanged(property: KProperty<*>)
-    fun add(adapter: BindingAdapter)
-    fun bind()
+    fun notifyPropertyChanged(property: KProperty1<*, *>)
+    fun add(adapter: PropertyBindingAdapter)
+    fun notifyChanges()
 }
 
 class BindingManager<T : BindingData>(val data: T) : BaseBindingManager {
 
-    private val adapters = HashMap<Int, MutableList<BindingAdapter>>()
+    private val adapters = HashMap<KProperty1<*, *>, MutableList<PropertyBindingAdapter>>()
 
-    fun add(property: KProperty<*>, onChange: T.() -> Unit) =
-        add(OneWayBindingAdapter(property, data, onChange))
+    fun <R> add(property: KProperty1<T, R>, setting: (R) -> Unit) =
+        add(OneWayBindingAdapter(property, data, setting))
 
-    override fun add(adapter: BindingAdapter) {
-        val list = adapters[adapter.property.hashCode()]
+    override fun add(adapter: PropertyBindingAdapter) {
+        val list = adapters[adapter.property]
 
         list?.add(adapter) ?: run {
-            adapters[adapter.property.hashCode()] = mutableListOf(adapter)
+            adapters[adapter.property] = mutableListOf(adapter)
         }
     }
 
-    override fun notifyPropertyChanged(property: KProperty<*>) {
-        val binding = adapters[property.hashCode()]
+    override fun notifyPropertyChanged(property: KProperty1<*, *>) {
+        val binding = adapters[property]
 
         binding?.forEach { it.notifyPropertyChanged(property) }
     }
 
-    override fun bind() {
-        adapters.forEach { it.value.forEach { it.bind() } }
+    override fun notifyChanges() {
+        adapters.forEach { it.value.forEach { it.notifyPropertyChanged(it.property) } }
     }
 }

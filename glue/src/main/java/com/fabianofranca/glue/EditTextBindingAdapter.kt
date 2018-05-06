@@ -3,16 +3,13 @@ package com.fabianofranca.glue
 import android.text.Editable
 import android.text.TextWatcher
 import android.widget.EditText
-import kotlin.reflect.KProperty
+import kotlin.reflect.KMutableProperty1
 
 class EditTextBindingAdapter<T : BindingData>(
     editText: EditText,
-    property: KProperty<*>,
-    data: T,
-    getting: T.() -> String,
-    setting: T.(String) -> Unit
-) : TwoWayBindingAdapter<T, String>(property, data, { editText.setText(getting(this)) }, setting),
-    TextWatcher {
+    mutableProperty: KMutableProperty1<T, String>,
+    data: T
+) : TextWatcher, TwoWayBindingAdapter<T, String>(mutableProperty, data, { editText.setText(it) }) {
 
     init {
         editText.addTextChangedListener(this)
@@ -25,16 +22,14 @@ class EditTextBindingAdapter<T : BindingData>(
     }
 
     override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-        set(s.toString())
+        bindModel(s.toString())
     }
 }
 
 fun <T : BindingData> EditText.binding(
     bindingData: T,
-    property: KProperty<*>,
-    getting: T.() -> String,
-    setting: T.(String) -> Unit
+    mutableProperty: KMutableProperty1<T, String>
 ) {
-    val adapter = EditTextBindingAdapter(this, property, bindingData, getting, setting)
+    val adapter = EditTextBindingAdapter(this, mutableProperty, bindingData)
     bindingData.bindingManager.add(adapter)
 }

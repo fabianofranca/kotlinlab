@@ -5,7 +5,8 @@ import com.fabianofranca.kotlinlab.provider.api.PlaceHolderApi
 import com.google.gson.Gson
 import kotlinx.coroutines.experimental.runBlocking
 import okhttp3.mockwebserver.MockResponse
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Test
 
 class PostsProviderTest : ProviderBaseTest<PlaceHolderApi>(PlaceHolderApi::class) {
