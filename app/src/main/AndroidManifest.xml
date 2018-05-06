@@ -20,6 +20,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".presentation.posts.PostsActivity" />
+        <activity android:name=".GlueActivity" />
     </application>
 
 </manifest>
