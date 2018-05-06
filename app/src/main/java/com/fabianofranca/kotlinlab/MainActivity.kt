@@ -18,6 +18,10 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, PostsActivity::class.java))
         }
 
+        btnBinding.setOnClickListener {
+            startActivity(Intent(this, BindingActivity::class.java))
+        }
+
         btnGlue.setOnClickListener {
             startActivity(Intent(this, GlueActivity::class.java))
         }

@@ -11,16 +11,16 @@ import kotlin.system.measureTimeMillis
 
 class GlueActivity: AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        val time = measureTimeMillis {
 
-        super.onCreate(savedInstanceState)
+            super.onCreate(savedInstanceState)
 
-        setContentView(R.layout.activity_glue)
+            setContentView(R.layout.activity_glue)
 
-        val user = User()
-        user.name = "Fabiano"
-        user.email = "email@fabianofranca.com"
+            val user = User()
+            user.name = "Fabiano"
+            user.email = "email@fabianofranca.com"
 
-        var time = measureTimeMillis {
             txtName.binding(user, User::name)
             txtEmail.binding(user, User::email)
 
@@ -28,23 +28,19 @@ class GlueActivity: AppCompatActivity() {
             edName2.binding(user, User::name)
 
             edEmail.binding(user, User::email)
-        }
 
-        println("tuning: setup $time")
-
-        time = measureTimeMillis {
             user.notifyChanges()
-        }
 
-        println("tuning: init notify $time")
+            btnBind.setOnClickListener {
+                val time = measureTimeMillis {
+                    user.notifyChanges()
+                }
 
-        btnBind.setOnClickListener {
-            val time = measureTimeMillis {
-                user.notifyChanges()
+                println("tuning: button notify $time")
             }
-
-            println("tuning: button notify $time")
         }
+
+        println("tuning: setup glue $time")
     }
 
     override fun onBackPressed() {
